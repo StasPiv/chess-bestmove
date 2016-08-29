@@ -25,6 +25,11 @@ class ChessBestMove
     private $engineConfiguration;
 
     /**
+     * @var BestMoveParser
+     */
+    private $parser;
+
+    /**
      * ChessBestMove constructor.
      * @param EngineConfiguration $engineConfiguration
      */
@@ -51,6 +56,8 @@ class ChessBestMove
             '/tmp',
             []
         );
+
+        $this->parser = new BestMoveParser($this->pipes[1]);
 
         if (!is_resource($this->resource)) {
             $this->shutDown();
@@ -88,22 +95,7 @@ class ChessBestMove
             'go wtime '.$this->engineConfiguration->getWtime().' btime '.$this->engineConfiguration->getBtime().PHP_EOL
         );
 
-        while (true) {
-            $content = fread($this->pipes[1], 8192);
-
-            preg_match(
-                "/bestmove\s(?P<from>[a-h]\d)(?P<to>[a-h]\d)(?P<promotion>\w)?/i",
-                $content,
-                $matches
-            );
-
-            if (isset($matches["from"])) {
-                $this->shutDown();
-                return SerializerBuilder::create()->build()->deserialize(json_encode($matches), Move::class, 'json');
-            }
-        }
-
-        return new Move();
+        return $this->parser->parseBestMove();
     }
 
     public function __destruct()

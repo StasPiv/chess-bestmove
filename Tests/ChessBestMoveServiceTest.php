@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 use StasPiv\ChessBestMove\Model\EngineConfiguration;
 use StasPiv\ChessBestMove\Model\Move;
 use StasPiv\ChessBestMove\Model\PromotionType;
+use StasPiv\ChessBestMove\Service\BestMoveParser;
 use StasPiv\ChessBestMove\Service\ChessBestMove;
 
 class ChessBestMoveServiceTest extends TestCase
@@ -56,5 +57,30 @@ class ChessBestMoveServiceTest extends TestCase
 
         $this->assertInstanceOf(Move::class, $bestMove);
         $this->assertEquals((new Move())->setFrom('h7')->setTo('h8')->setPromotion(PromotionType::KNIGHT), $bestMove);
+    }
+
+    public function testParseBestMoveOneLine()
+    {
+        $handler = fopen('/tmp/test.txt', 'w+');
+        fwrite($handler, 'bestmove f4h6');
+
+        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'));
+        $move = $parser->parseBestMove();
+
+        $this->assertInstanceOf(Move::class, $move);
+        $this->assertEquals((new Move())->setFrom('f4')->setTo('h6'), $move);
+    }
+
+    public function testParseBestMoveTwoLines()
+    {
+        $handler = fopen('/tmp/test.txt', 'w+');
+        fwrite($handler, 'bestmove'.PHP_EOL);
+        fwrite($handler, 'f4h6');
+
+        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'));
+        $move = $parser->parseBestMove();
+
+        $this->assertInstanceOf(Move::class, $move);
+        $this->assertEquals((new Move())->setFrom('f4')->setTo('h6'), $move);
     }
 }
