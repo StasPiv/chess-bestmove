@@ -10,8 +10,10 @@ namespace StasPiv\ChessBestMove\Service;
 
 
 use JMS\Serializer\SerializerBuilder;
+use Psr\Log\LoggerInterface;
 use StasPiv\ChessBestMove\Model\EngineConfiguration;
 use StasPiv\ChessBestMove\Model\Move;
+use Symfony\Component\HttpKernel\Log\DebugLoggerInterface;
 
 class ChessBestMove
 {
@@ -28,14 +30,20 @@ class ChessBestMove
      * @var BestMoveParser
      */
     private $parser;
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
     /**
      * ChessBestMove constructor.
      * @param EngineConfiguration $engineConfiguration
+     * @param LoggerInterface $logger
      */
-    public function __construct(EngineConfiguration $engineConfiguration)
+    public function __construct(EngineConfiguration $engineConfiguration, LoggerInterface $logger = null)
     {
         $this->engineConfiguration = $engineConfiguration;
+        $this->logger = $logger;
     }
 
     /**
@@ -57,7 +65,7 @@ class ChessBestMove
             []
         );
 
-        $this->parser = new BestMoveParser($this->pipes[1]);
+        $this->parser = new BestMoveParser($this->pipes[1], $this->logger);
 
         if (!is_resource($this->resource)) {
             $this->shutDown();

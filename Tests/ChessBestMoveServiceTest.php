@@ -39,7 +39,7 @@ class ChessBestMoveServiceTest extends TestCase
 
         $this->testEngineConfiguration->setWtime(3000)->setBtime(3000);
 
-        $this->chessBestMoveService = new ChessBestMove($this->testEngineConfiguration);
+        $this->chessBestMoveService = new ChessBestMove($this->testEngineConfiguration,);
 
     }
 
@@ -64,7 +64,7 @@ class ChessBestMoveServiceTest extends TestCase
         $handler = fopen('/tmp/test.txt', 'w+');
         fwrite($handler, 'bestmove f4h6');
 
-        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'));
+        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'),);
         $move = $parser->parseBestMove();
 
         $this->assertInstanceOf(Move::class, $move);
@@ -77,7 +77,7 @@ class ChessBestMoveServiceTest extends TestCase
         fwrite($handler, 'bestmove'.PHP_EOL);
         fwrite($handler, 'f4h6');
 
-        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'));
+        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'),);
         $move = $parser->parseBestMove();
 
         $this->assertInstanceOf(Move::class, $move);
