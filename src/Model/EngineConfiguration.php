@@ -32,6 +32,15 @@ class EngineConfiguration
     private $btime;
 
     /**
+     * EngineConfiguration constructor.
+     * @param string $engine
+     */
+    public function __construct($engine)
+    {
+        $this->engine = $engine;
+    }
+
+    /**
      * @return string
      */
     public function getEngine(): string

@@ -29,7 +29,7 @@ class ChessBestMoveServiceTest extends TestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->testEngineConfiguration = (new EngineConfiguration())->setEngine('stockfish');
+        $this->testEngineConfiguration = new EngineConfiguration('stockfish');
 
         $this->testEngineConfiguration->addOption('Skill Level', 20)
                                       ->addOption('Hash', 1024)
