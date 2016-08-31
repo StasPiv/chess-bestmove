@@ -11,7 +11,6 @@ namespace StasPiv\ChessBestMove\Service;
 use JMS\Serializer\SerializerBuilder;
 use Psr\Log\LoggerInterface;
 use StasPiv\ChessBestMove\Model\Move;
-use Symfony\Component\HttpKernel\Log\DebugLoggerInterface;
 
 class BestMoveParser
 {
@@ -30,7 +29,7 @@ class BestMoveParser
      * @param Resource $handler
      * @param LoggerInterface $logger
      */
-    public function __construct($handler, LoggerInterface $logger)
+    public function __construct($handler, LoggerInterface $logger = null)
     {
         $this->handle = $handler;
         $this->logger = $logger;
@@ -44,7 +43,7 @@ class BestMoveParser
         $prefix = '';
 
         while (true) {
-            $content = $prefix . fread($this->handle, 8192);
+            $content = $prefix . fread($this->handle, 4096);
 
             if ($this->logger) {
                 $this->logger->debug('Thinking...'.$content);

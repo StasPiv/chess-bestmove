@@ -39,11 +39,20 @@ class ChessBestMoveServiceTest extends TestCase
 
         $this->testEngineConfiguration->setWtime(3000)->setBtime(3000);
 
-        $this->chessBestMoveService = new ChessBestMove($this->testEngineConfiguration,);
+        $this->testEngineConfiguration->setPathToPolyglotRunDir('/home/stas/work/playzone/ctg-reader/ctgexporter/examples');
+
+        $this->chessBestMoveService = new ChessBestMove($this->testEngineConfiguration);
 
     }
 
     public function testGetBestMoveFromBeginningPosition()
+    {
+        $bestMove = $this->chessBestMoveService->getBestMoveFromFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+
+        $this->assertInstanceOf(Move::class, $bestMove);
+    }
+
+    public function testGetBestMoveFromKevinPosition()
     {
         $bestMove = $this->chessBestMoveService->getBestMoveFromFen('5k2/2rr1p2/7R/5K2/5P2/8/8/6R1 w - - 0 66');
 
@@ -64,7 +73,7 @@ class ChessBestMoveServiceTest extends TestCase
         $handler = fopen('/tmp/test.txt', 'w+');
         fwrite($handler, 'bestmove f4h6');
 
-        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'),);
+        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'));
         $move = $parser->parseBestMove();
 
         $this->assertInstanceOf(Move::class, $move);
@@ -77,7 +86,7 @@ class ChessBestMoveServiceTest extends TestCase
         fwrite($handler, 'bestmove'.PHP_EOL);
         fwrite($handler, 'f4h6');
 
-        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'),);
+        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'));
         $move = $parser->parseBestMove();
 
         $this->assertInstanceOf(Move::class, $move);

@@ -32,6 +32,11 @@ class EngineConfiguration
     private $btime;
 
     /**
+     * @var string
+     */
+    private $pathToPolyglotRunDir;
+
+    /**
      * EngineConfiguration constructor.
      * @param string $engine
      */
@@ -138,6 +143,25 @@ class EngineConfiguration
     public function setBtime(int $btime): self
     {
         $this->btime = $btime;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPathToPolyglotRunDir(): string
+    {
+        return $this->pathToPolyglotRunDir;
+    }
+
+    /**
+     * @param string $pathToPolyglotRunDir
+     * @return EngineConfiguration
+     */
+    public function setPathToPolyglotRunDir(string $pathToPolyglotRunDir): self
+    {
+        $this->pathToPolyglotRunDir = $pathToPolyglotRunDir;
 
         return $this;
     }

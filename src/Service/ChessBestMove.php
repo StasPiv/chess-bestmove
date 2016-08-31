@@ -9,11 +9,9 @@
 namespace StasPiv\ChessBestMove\Service;
 
 
-use JMS\Serializer\SerializerBuilder;
 use Psr\Log\LoggerInterface;
 use StasPiv\ChessBestMove\Model\EngineConfiguration;
 use StasPiv\ChessBestMove\Model\Move;
-use Symfony\Component\HttpKernel\Log\DebugLoggerInterface;
 
 class ChessBestMove
 {
@@ -47,21 +45,20 @@ class ChessBestMove
     }
 
     /**
-     * @param string $engine
      * @return bool
      * @throws \Exception
      */
-    private function startGame(string $engine)
+    private function startGame()
     {
         $this->resource = proc_open(
-            '/usr/games/' . $engine,
+            '/usr/games/polyglot -ec /usr/games/' . $this->engineConfiguration->getEngine(),
             [
                 0 => ["pipe", "r"],
                 1 => ["pipe", "w"],
                 2 => ["file", "/tmp/uci_err", "w+"]
             ],
             $this->pipes,
-            '/tmp',
+            $this->engineConfiguration->getPathToPolyglotRunDir(),
             []
         );
 
@@ -82,7 +79,7 @@ class ChessBestMove
      */
     public function getBestMoveFromFen(string $fen): Move
     {
-        $this->startGame($this->engineConfiguration->getEngine());
+        $this->startGame();
 
         fwrite($this->pipes[0], 'uci'.PHP_EOL);
         fwrite($this->pipes[0], 'ucinewgame'.PHP_EOL);
