@@ -43,7 +43,7 @@ class BestMoveParser
         $prefix = '';
 
         while (true) {
-            $content = $prefix . fread($this->handle, 4096);
+            $content = $prefix . fread($this->handle, 8192);
 
             if ($this->logger) {
                 $this->logger->debug('Thinking...'.$content);

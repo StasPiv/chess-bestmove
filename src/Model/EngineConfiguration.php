@@ -14,22 +14,22 @@ class EngineConfiguration
     /**
      * @var string
      */
-    private $engine;
+    private $engine = 'stockfish';
 
     /**
      * @var array hash map (key=>value)
      */
-    private $options;
+    private $options = [];
 
     /**
      * @var int
      */
-    private $wtime;
+    private $wtime = 300;
 
     /**
      * @var int
      */
-    private $btime;
+    private $btime = 300;
 
     /**
      * @var string
