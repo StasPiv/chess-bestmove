@@ -12,8 +12,8 @@ use PHPUnit\Framework\TestCase;
 use StasPiv\ChessBestMove\Model\EngineConfiguration;
 use StasPiv\ChessBestMove\Model\Move;
 use StasPiv\ChessBestMove\Model\PromotionType;
-use StasPiv\ChessBestMove\Service\BestMoveParser;
 use StasPiv\ChessBestMove\Service\ChessBestMove;
+use StasPiv\ChessBestMove\Tests\Mock\MockLogger;
 
 class ChessBestMoveServiceTest extends TestCase
 {
@@ -41,7 +41,7 @@ class ChessBestMoveServiceTest extends TestCase
 
         $this->testEngineConfiguration->setPathToPolyglotRunDir('/home/stas/work/playzone/ctg-reader/ctgexporter/examples');
 
-        $this->chessBestMoveService = new ChessBestMove($this->testEngineConfiguration);
+        $this->chessBestMoveService = new ChessBestMove($this->testEngineConfiguration, new MockLogger());
 
     }
 
@@ -80,8 +80,7 @@ class ChessBestMoveServiceTest extends TestCase
         $handler = fopen('/tmp/test.txt', 'w+');
         fwrite($handler, 'bestmove f4h6');
 
-        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'));
-        $move = $parser->parseBestMove();
+        $move = $this->chessBestMoveService->searchBestMove(fopen('/tmp/test.txt', 'r'));
 
         $this->assertInstanceOf(Move::class, $move);
         $this->assertEquals((new Move())->setFrom('f4')->setTo('h6'), $move);
@@ -93,8 +92,7 @@ class ChessBestMoveServiceTest extends TestCase
         fwrite($handler, 'bestmove'.PHP_EOL);
         fwrite($handler, 'f4h6');
 
-        $parser = new BestMoveParser(fopen('/tmp/test.txt', 'r'));
-        $move = $parser->parseBestMove();
+        $move = $this->chessBestMoveService->searchBestMove(fopen('/tmp/test.txt', 'r'));
 
         $this->assertInstanceOf(Move::class, $move);
         $this->assertEquals((new Move())->setFrom('f4')->setTo('h6'), $move);
