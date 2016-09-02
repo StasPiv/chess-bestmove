@@ -22,16 +22,6 @@ class EngineConfiguration
     private $options = [];
 
     /**
-     * @var int
-     */
-    private $wtime = 300;
-
-    /**
-     * @var int
-     */
-    private $btime = 300;
-
-    /**
      * @var string
      */
     private $pathToPolyglotRunDir;
@@ -107,44 +97,6 @@ class EngineConfiguration
         }
 
         return $this->options[$name];
-    }
-
-    /**
-     * @return int
-     */
-    public function getWtime(): int
-    {
-        return $this->wtime;
-    }
-
-    /**
-     * @param int $wtime
-     * @return EngineConfiguration
-     */
-    public function setWtime(int $wtime): self
-    {
-        $this->wtime = $wtime;
-
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getBtime(): int
-    {
-        return $this->btime;
-    }
-
-    /**
-     * @param int $btime
-     * @return EngineConfiguration
-     */
-    public function setBtime(int $btime): self
-    {
-        $this->btime = $btime;
-
-        return $this;
     }
 
     /**

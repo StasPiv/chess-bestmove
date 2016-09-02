@@ -83,15 +83,17 @@ class ChessBestMove
 
     /**
      * @param string $fen startpos by default
+     * @param int $wtime
+     * @param int $btime
      * @return Move
      */
-    public function getBestMoveFromFen(string $fen = self::START_POSITION): Move
+    public function getBestMoveFromFen(string $fen = self::START_POSITION, $wtime = 3000, $btime = 3000): Move
     {
         fwrite($this->pipes[0], 'position fen '.$fen.PHP_EOL);
 
         fwrite(
             $this->pipes[0],
-            'go wtime '.$this->engineConfiguration->getWtime().' btime '.$this->engineConfiguration->getBtime().PHP_EOL
+            'go wtime '.$wtime.' btime '.$btime.PHP_EOL
         );
 
         return $this->searchBestMove($this->pipes[1]);

@@ -37,8 +37,6 @@ class ChessBestMoveServiceTest extends TestCase
                                       ->addOption('Threads', 4)
                                       ->addOption('Contempt', mt_rand(-100, 100));
 
-        $this->testEngineConfiguration->setWtime(30000)->setBtime(30000);
-
         $this->testEngineConfiguration->setPathToPolyglotRunDir('/home/stas/work/playzone/ctg-reader/ctgexporter/examples');
 
         $this->chessBestMoveService = new ChessBestMove($this->testEngineConfiguration, new MockLogger());
@@ -47,14 +45,18 @@ class ChessBestMoveServiceTest extends TestCase
 
     public function testGetBestMoveFromBeginningPosition()
     {
-        $bestMove = $this->chessBestMoveService->getBestMoveFromFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+        $bestMove = $this->chessBestMoveService->getBestMoveFromFen(
+            'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+        );
 
         $this->assertInstanceOf(Move::class, $bestMove);
     }
 
     public function testGetBestMoveAfterD2D4()
     {
-        $bestMove = $this->chessBestMoveService->getBestMoveFromFen('rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1');
+        $bestMove = $this->chessBestMoveService->getBestMoveFromFen(
+            'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1'
+        );
 
         $this->assertInstanceOf(Move::class, $bestMove);
     }
