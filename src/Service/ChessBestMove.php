@@ -238,6 +238,7 @@ class ChessBestMove
      */
     private function sendCommand(string $command)
     {
+        $this->logger->debug('SEND: '.$command);
         return fwrite($this->pipes[0], $command.PHP_EOL);
     }
 

@@ -34,8 +34,7 @@ class ChessBestMoveServiceTest extends TestCase
 
         $this->testEngineConfiguration->addOption('Skill Level', 20)
                                       ->addOption('Hash', 1024)
-                                      ->addOption('Threads', 4)
-                                      ->addOption('Contempt', mt_rand(-100, 100));
+                                      ->addOption('Threads', 4);
 
         $this->testEngineConfiguration->setPathToPolyglotRunDir('/home/stas/work/playzone/ctg-reader/ctgexporter/examples');
 
@@ -115,13 +114,19 @@ class ChessBestMoveServiceTest extends TestCase
     {
         $moveArray = [
             [
-                'from' => 'd2',
-                'to' => 'd4'
-            ]
+                'from' => 'e2',
+                'to' => 'e4'
+            ],
+            [
+                'from' => 'c7',
+                'to' => 'c5'
+            ],
         ];
 
         $move = $this->chessBestMoveService->getBestMoveFrom2DimensionalMovesArray($moveArray);
 
         $this->assertInstanceOf(Move::class, $move);
+
+        self::assertNotEquals((new Move())->setFrom('d2')->setTo('d4'), $move);
     }
 }
