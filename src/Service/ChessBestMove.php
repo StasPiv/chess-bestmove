@@ -126,6 +126,34 @@ class ChessBestMove
     }
 
     /**
+     * @param array  $movesArray
+     * @param int    $wtime
+     * @param int    $btime
+     * @param string $startPosition
+     * @return Move
+     */
+    public function getBestMoveFrom2DimensionalMovesArray(
+        array $movesArray,
+        int $wtime = 3000,
+        int $btime = 3000,
+        string $startPosition = self::START_POSITION
+    ): Move
+    {
+        return $this->getBestMoveFromMovesArray(
+            array_map(
+                function (array $moveArray)
+                {
+                    return $this->buildMoveFromArray($moveArray);
+                },
+                $movesArray
+            ),
+            $wtime,
+            $btime,
+            $startPosition
+        );
+    }
+
+    /**
      * @param resource $handle
      * @return Move
      */
@@ -182,7 +210,9 @@ class ChessBestMove
             throw new NotValidBestMoveHaystackException;
         }
 
-        return SerializerBuilder::create()->build()->deserialize(json_encode($matches), Move::class, 'json');
+        $moveArray = $matches;
+
+        return $this->buildMoveFromArray($moveArray);
     }
 
     public function __destruct()
@@ -209,5 +239,14 @@ class ChessBestMove
     private function sendCommand(string $command)
     {
         return fwrite($this->pipes[0], $command.PHP_EOL);
+    }
+
+    /**
+     * @param array $moveArray
+     * @return Move
+     */
+    private function buildMoveFromArray(array $moveArray): Move
+    {
+        return SerializerBuilder::create()->build()->deserialize(json_encode($moveArray), Move::class, 'json');
     }
 }
