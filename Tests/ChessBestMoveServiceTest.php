@@ -99,4 +99,15 @@ class ChessBestMoveServiceTest extends TestCase
         $this->assertInstanceOf(Move::class, $move);
         $this->assertEquals((new Move())->setFrom('f4')->setTo('h6'), $move);
     }
+
+    public function testGetBestMoveFromMoveArray()
+    {
+        $moveArray = [
+            (new Move())->setFrom('d2')->setTo('d4')
+        ];
+
+        $move = $this->chessBestMoveService->getBestMoveFromMovesArray($moveArray);
+
+        $this->assertInstanceOf(Move::class, $move);
+    }
 }

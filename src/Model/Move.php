@@ -31,7 +31,7 @@ class Move
      *
      * @JMS\Type("string")
      */
-    private $promotion = PromotionType::QUEEN;
+    private $promotion;
 
     /**
      * @return string
@@ -76,7 +76,7 @@ class Move
      */
     public function getPromotion(): string
     {
-        return $this->promotion;
+        return (string)$this->promotion;
     }
 
     /**
@@ -88,5 +88,10 @@ class Move
         $this->promotion = $promotion;
 
         return $this;
+    }
+
+    function __toString()
+    {
+        return $this->getFrom().$this->getTo().$this->getPromotion();
     }
 }

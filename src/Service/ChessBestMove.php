@@ -64,14 +64,14 @@ class ChessBestMove
             []
         );
 
-        fwrite($this->pipes[0], 'uci'.PHP_EOL);
+        $this->sendCommand('uci');
         $this->waitFor('uciok', $this->pipes[1]);
-        fwrite($this->pipes[0], 'ucinewgame'.PHP_EOL);
-        fwrite($this->pipes[0], 'isready'.PHP_EOL);
+        $this->sendCommand('ucinewgame');
+        $this->sendCommand('isready');
         $this->waitFor('readyok', $this->pipes[1]);
 
         foreach ($this->engineConfiguration->getOptions() as $name => $value) {
-            fwrite($this->pipes[0], 'setoption name '.$name.' value '.$value.PHP_EOL);
+            $this->sendCommand('setoption name '.$name.' value '.$value);
         }
 
         if (!is_resource($this->resource)) {
@@ -87,14 +87,40 @@ class ChessBestMove
      * @param int $btime
      * @return Move
      */
-    public function getBestMoveFromFen(string $fen = self::START_POSITION, $wtime = 3000, $btime = 3000): Move
+    public function getBestMoveFromFen(string $fen = self::START_POSITION, int $wtime = 3000, int $btime = 3000): Move
     {
-        fwrite($this->pipes[0], 'position fen '.$fen.PHP_EOL);
+        $this->sendCommand('position fen '.$fen);
 
-        fwrite(
-            $this->pipes[0],
-            'go wtime '.$wtime.' btime '.$btime.PHP_EOL
-        );
+        $this->sendGo($wtime, $btime);
+
+        return $this->searchBestMove($this->pipes[1]);
+    }
+
+    /**
+     * @param array|Move[] $moves
+     * @param int $wtime
+     * @param int $btime
+     * @param string $startPosition
+     * @return Move
+     */
+    public function getBestMoveFromMovesArray(
+        array $moves,
+        int $wtime = 3000,
+        int $btime = 3000,
+        string $startPosition = self::START_POSITION
+    ): Move
+    {
+        $moveString = implode(' ', array_map(
+            function (Move $move)
+            {
+                return $move;
+            },
+            $moves
+        ));
+
+        $this->sendCommand('position fen '.$startPosition.' moves '.$moveString);
+
+        $this->sendGo($wtime, $btime);
 
         return $this->searchBestMove($this->pipes[1]);
     }
@@ -162,5 +188,26 @@ class ChessBestMove
     public function __destruct()
     {
         $this->shutDown();
+    }
+
+    /**
+     * @param int $wtime
+     * @param int $btime
+     */
+    private function sendGo(int $wtime, int $btime)
+    {
+        fwrite(
+            $this->pipes[0],
+            'go wtime '.$wtime.' btime '.$btime.PHP_EOL
+        );
+    }
+
+    /**
+     * @param string $command
+     * @return int
+     */
+    private function sendCommand(string $command)
+    {
+        return fwrite($this->pipes[0], $command.PHP_EOL);
     }
 }
