@@ -8,16 +8,21 @@
 
 namespace StasPiv\ChessBestMove\Model;
 
+use JMS\Serializer\Annotation as JMS;
 
 class EngineConfiguration
 {
     /**
      * @var string
+     *
+     * @JMS\Type("string")
      */
     private $engine = 'stockfish';
 
     /**
      * @var array hash map (key=>value)
+     *
+     * @JMS\Type("array")
      */
     private $options = [];
 
