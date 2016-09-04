@@ -28,6 +28,8 @@ class EngineConfiguration
 
     /**
      * @var string
+     *
+     * @JMS\Type("string")
      */
     private $pathToPolyglotRunDir;
 
