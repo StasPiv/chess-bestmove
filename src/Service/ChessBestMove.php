@@ -167,7 +167,7 @@ class ChessBestMove
         }
     }
 
-    private function shutDown()
+    public function shutDown()
     {
         for ($i=0; $i<=2; $i++) {
             if (isset($this->pipes[$i])) {
