@@ -189,7 +189,10 @@ class ChessBestMove
     {
         do {
             $content = fgets($handle);
-            $this->logger->debug($content);
+
+            if (!empty($content)) {
+                $this->logger->debug($content);
+            }
         } while (strpos($content, $needle) === false);
 
         return $content;
