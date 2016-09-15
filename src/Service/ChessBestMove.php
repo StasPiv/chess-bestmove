@@ -190,8 +190,9 @@ class ChessBestMove
         do {
             $content = fgets($handle);
 
-            if (!empty($content)) {
-                $this->logger->debug($content);
+            if (empty($content)) {
+                $this->logger->error('Bot is failed');
+                $this->shutDown();
             }
         } while (strpos($content, $needle) === false);
 
