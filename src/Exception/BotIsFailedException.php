@@ -9,7 +9,13 @@
 namespace StasPiv\ChessBestMove\Exception;
 
 
-class BotIsFailedException
+use Exception;
+
+class BotIsFailedException extends \RuntimeException
 {
+    public function __construct($message = 'Bot is failed', $code = 0, Exception $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
 
 }

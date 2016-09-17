@@ -10,6 +10,7 @@ namespace StasPiv\ChessBestMove\Service;
 
 use JMS\Serializer\SerializerBuilder;
 use Psr\Log\LoggerInterface;
+use StasPiv\ChessBestMove\Exception\BotIsFailedException;
 use StasPiv\ChessBestMove\Exception\NotValidBestMoveHaystackException;
 use StasPiv\ChessBestMove\Exception\ResourceUnavailableException;
 use StasPiv\ChessBestMove\Model\EngineConfiguration;
@@ -191,8 +192,8 @@ class ChessBestMove
             $content = fgets($handle);
 
             if (empty($content)) {
-                $this->logger->error('Bot is failed');
                 $this->shutDown();
+                throw new BotIsFailedException;
             }
         } while (strpos($content, $needle) === false);
 
