@@ -192,7 +192,7 @@ class ChessBestMove
             $content = fgets($handle);
 
             if (empty($content)) {
-                $this->shutDown();
+                $this->restartProcess();
                 throw new BotIsFailedException;
             }
         } while (strpos($content, $needle) === false);
@@ -254,5 +254,11 @@ class ChessBestMove
     private function buildMoveFromArray(array $moveArray): Move
     {
         return SerializerBuilder::create()->build()->deserialize(json_encode($moveArray), Move::class, 'json');
+    }
+
+    private function restartProcess()
+    {
+        $this->shutDown();
+        $this->startGame();
     }
 }
