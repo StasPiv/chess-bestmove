@@ -177,7 +177,7 @@ class ChessBestMove
         }
 
         if (is_resource($this->resource)) {
-            @fclose($this->resource);
+            @proc_close($this->resource);
         }
     }
 
