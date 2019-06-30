@@ -65,6 +65,10 @@ class ChessBestMove
             []
         );
 
+        if (!is_resource($this->resource)) {
+            throw new ResourceUnavailableException;
+        }
+
         $this->sendCommand('uci');
         $this->waitFor('uciok', $this->pipes[1]);
         $this->sendCommand('ucinewgame');
@@ -73,10 +77,6 @@ class ChessBestMove
 
         foreach ($this->engineConfiguration->getOptions() as $name => $value) {
             $this->sendCommand('setoption name '.$name.' value '.$value);
-        }
-
-        if (!is_resource($this->resource)) {
-            throw new ResourceUnavailableException;
         }
 
         return true;
@@ -192,7 +192,6 @@ class ChessBestMove
             $content = fgets($handle);
 
             if (empty($content)) {
-                $this->restartProcess();
                 throw new BotIsFailedException;
             }
         } while (strpos($content, $needle) === false);
