@@ -11,7 +11,6 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "php": ">=7",
         "jms/serializer": "1.1.0",
         "indigophp/doctrine-annotation-autoload": "^0.1.0",
         "psr/log": "1.0.0"

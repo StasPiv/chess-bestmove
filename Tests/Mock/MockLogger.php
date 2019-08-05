@@ -14,7 +14,7 @@ class MockLogger extends AbstractLogger
 {
     public function log($level, $message, array $context = array())
     {
-        //echo $level.' '.$message.PHP_EOL;
+        echo $level.' '.$message.PHP_EOL;
     }
 
 }

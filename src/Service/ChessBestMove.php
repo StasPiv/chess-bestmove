@@ -35,6 +35,8 @@ class ChessBestMove
      */
     private $logger;
 
+    private $currentScore = -9999;
+
     /**
      * ChessBestMove constructor.
      * @param EngineConfiguration $engineConfiguration
@@ -84,31 +86,26 @@ class ChessBestMove
 
     /**
      * @param string $fen startpos by default
-     * @param int $wtime
-     * @param int $btime
+     * @param int $moveTime
      * @return Move
      */
-    public function getBestMoveFromFen(string $fen = self::START_POSITION, int $wtime = 3000, int $btime = 3000): Move
+    public function getBestMoveFromFen(string $fen = self::START_POSITION, int $moveTime = 3000): Move
     {
         $this->sendCommand('position fen '.$fen);
 
-        $this->sendGo($wtime, $btime);
+        $this->sendGo($moveTime);
 
         return $this->searchBestMove($this->pipes[1]);
     }
 
     /**
      * @param array|Move[] $moves
-     * @param int $wtime
-     * @param int $btime
+     * @param int $moveTime
      * @param string $startPosition
      * @return Move
      */
     public function getBestMoveFromMovesArray(
-        array $moves,
-        int $wtime = 3000,
-        int $btime = 3000,
-        string $startPosition = self::START_POSITION
+        array $moves, int $moveTime = 3000, string $startPosition = self::START_POSITION
     ): Move
     {
         $moveString = implode(' ', array_map(
@@ -121,7 +118,7 @@ class ChessBestMove
 
         $this->sendCommand('position fen '.$startPosition.' moves '.$moveString);
 
-        $this->sendGo($wtime, $btime);
+        $this->sendGo($moveTime);
 
         return $this->searchBestMove($this->pipes[1]);
     }
@@ -142,15 +139,11 @@ class ChessBestMove
     {
         return $this->getBestMoveFromMovesArray(
             array_map(
-                function (array $moveArray)
-                {
+                function (array $moveArray) {
                     return $this->buildMoveFromArray($moveArray);
                 },
                 $movesArray
-            ),
-            $wtime,
-            $btime,
-            $startPosition
+            ), $wtime, $startPosition
         );
     }
 
@@ -161,10 +154,29 @@ class ChessBestMove
     public function searchBestMove($handle)
     {
         try {
-            return $this->parseBestMove($content = $this->waitFor('bestmove', $handle));
+            return $this->parseBestMove($content = $this->waitFor('bestmove', $handle, [$this, 'searchScore']));
         } catch (NotValidBestMoveHaystackException $e) {
             /** @var string $content */
             return $this->parseBestMove($content.' '.fgets($handle));
+        }
+    }
+
+    /**
+     * @return int
+     */
+    public function getCurrentScore(): int
+    {
+        return $this->currentScore;
+    }
+
+    private function searchScore(string $content)
+    {
+        if (preg_match('/score (.+) nodes/', $content, $matches)) {
+            if (preg_match('/mate (\-?\d+)/', $matches[1], $matchesEstimation)) {
+                $this->currentScore = $matchesEstimation[1] > 0 ? 99999 : -99999;
+            } elseif (preg_match('/cp (\-?\d+)/', $matches[1], $matchesEstimation)) {
+                $this->currentScore = $matchesEstimation[1];
+            }
         }
     }
 
@@ -184,12 +196,17 @@ class ChessBestMove
     /**
      * @param $needle
      * @param $handle
+     * @param callable|null $callable
      * @return string
      */
-    private function waitFor($needle, $handle): string
+    private function waitFor($needle, $handle, callable $callable = null): string
     {
         do {
             $content = fgets($handle);
+
+            if ($callable) {
+                call_user_func($callable, $content);
+            }
 
             if (empty($content)) {
                 throw new BotIsFailedException;
@@ -225,14 +242,13 @@ class ChessBestMove
     }
 
     /**
-     * @param int $wtime
-     * @param int $btime
+     * @param int $moveTime
      */
-    private function sendGo(int $wtime, int $btime)
+    private function sendGo(int $moveTime)
     {
         fwrite(
             $this->pipes[0],
-            'go wtime '.$wtime.' btime '.$btime.PHP_EOL
+            'go movetime '.$moveTime.PHP_EOL
         );
     }
 
