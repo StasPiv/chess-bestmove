@@ -11,6 +11,7 @@ namespace StasPiv\ChessBestMove\Service;
 use JMS\Serializer\SerializerBuilder;
 use Psr\Log\LoggerInterface;
 use StasPiv\ChessBestMove\Exception\BotIsFailedException;
+use StasPiv\ChessBestMove\Exception\GameOverException;
 use StasPiv\ChessBestMove\Exception\NotValidBestMoveHaystackException;
 use StasPiv\ChessBestMove\Exception\ResourceUnavailableException;
 use StasPiv\ChessBestMove\Model\EngineConfiguration;
@@ -221,8 +222,12 @@ class ChessBestMove
      * @return Move
      * @throws NotValidBestMoveHaystackException
      */
-    private function parseBestMove(string $content)
+    public function parseBestMove(string $content)
     {
+        if ($content == 'bestmove (none)') {
+            throw new GameOverException();
+        }
+        
         if (!preg_match(
             "/bestmove\s*(?P<from>[a-h]\d)(?P<to>[a-h]\d)(?P<promotion>\w)?/i",
             $content,

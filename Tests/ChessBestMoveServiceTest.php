@@ -36,7 +36,7 @@ class ChessBestMoveServiceTest extends TestCase
                                       ->addOption('Hash', 1024)
                                       ->addOption('Threads', 4);
 
-        $this->testEngineConfiguration->setPathToPolyglotRunDir('/home/stas/work/playzone/ctg-reader/ctgexporter/examples');
+        $this->testEngineConfiguration->setPathToPolyglotRunDir('/home/user/chess-train');
 
         $this->chessBestMoveService = new ChessBestMove($this->testEngineConfiguration, new MockLogger());
 
@@ -128,5 +128,11 @@ class ChessBestMoveServiceTest extends TestCase
         $this->assertInstanceOf(Move::class, $move);
 
         self::assertNotEquals((new Move())->setFrom('d2')->setTo('d4'), $move);
+    }
+
+    public function testParseBestMoveNone()
+    {
+        $content = 'bestmove (none)';
+        $bestMove = $this->chessBestMoveService->parseBestMove($content);
     }
 }
