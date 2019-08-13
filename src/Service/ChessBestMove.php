@@ -224,15 +224,15 @@ class ChessBestMove
      */
     public function parseBestMove(string $content)
     {
-        if ($content == 'bestmove (none)') {
-            throw new GameOverException();
-        }
-        
         if (!preg_match(
             "/bestmove\s*(?P<from>[a-h]\d)(?P<to>[a-h]\d)(?P<promotion>\w)?/i",
             $content,
             $matches
         )) {
+            if (strpos($content, '(none)')) {
+                throw new GameOverException();
+            }
+            
             throw new NotValidBestMoveHaystackException;
         }
 

@@ -9,6 +9,7 @@
 namespace StasPiv\ChessBestMove\Tests;
 
 use PHPUnit\Framework\TestCase;
+use StasPiv\ChessBestMove\Exception\GameOverException;
 use StasPiv\ChessBestMove\Model\EngineConfiguration;
 use StasPiv\ChessBestMove\Model\Move;
 use StasPiv\ChessBestMove\Model\PromotionType;
@@ -132,7 +133,8 @@ class ChessBestMoveServiceTest extends TestCase
 
     public function testParseBestMoveNone()
     {
-        $content = 'bestmove (none)';
-        $bestMove = $this->chessBestMoveService->parseBestMove($content);
+        $this->setExpectedException(GameOverException::class);
+
+        $this->chessBestMoveService->parseBestMove('bestmove (none)');
     }
 }
