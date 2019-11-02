@@ -44,6 +44,7 @@ class ChessBestMove
 
     private $process;
     private $pool;
+    private $infiniteStarted = false;
 
     /**
      * ChessBestMove constructor.
@@ -140,7 +141,10 @@ class ChessBestMove
         $this->process = $this->pool->add(
             function () use ($callable, $fen) {
                 $this->sendCommand('position fen ' . $fen);
-                $this->sendCommand('go infinite');
+                if (!$this->infiniteStarted) {
+                    $this->sendCommand('go infinite');
+                    $this->infiniteStarted = true;
+                }
                 do {
                     $content = fgets($this->pipes[1]);
 
