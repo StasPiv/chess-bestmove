@@ -10,12 +10,16 @@ namespace StasPiv\ChessBestMove\Service;
 
 use JMS\Serializer\SerializerBuilder;
 use Psr\Log\LoggerInterface;
+use Spatie\Async\Pool;
+use Spatie\Async\Process\ParallelProcess;
 use StasPiv\ChessBestMove\Exception\BotIsFailedException;
 use StasPiv\ChessBestMove\Exception\GameOverException;
 use StasPiv\ChessBestMove\Exception\NotValidBestMoveHaystackException;
 use StasPiv\ChessBestMove\Exception\ResourceUnavailableException;
 use StasPiv\ChessBestMove\Model\EngineConfiguration;
 use StasPiv\ChessBestMove\Model\Move;
+use Throwable;
+use TypeError;
 
 class ChessBestMove
 {
@@ -38,6 +42,9 @@ class ChessBestMove
 
     private $currentScore = -9999;
 
+    private $process;
+    private $pool;
+
     /**
      * ChessBestMove constructor.
      * @param EngineConfiguration $engineConfiguration
@@ -47,15 +54,17 @@ class ChessBestMove
     {
         $this->engineConfiguration = $engineConfiguration;
         $this->logger = $logger;
-        $this->startGame();
+        $this->pool = Pool::create();
     }
 
     /**
      * @return bool
      * @throws ResourceUnavailableException
      */
-    private function startGame()
+    public function startGame()
     {
+        $this->setErrorHandlers();
+
         $this->resource = proc_open(
             '/usr/games/polyglot -ec /usr/games/' . $this->engineConfiguration->getEngine(),
             [
@@ -86,17 +95,81 @@ class ChessBestMove
     }
 
     /**
-     * @param string $fen startpos by default
-     * @param int $moveTime
+     * @param string        $fen startpos by default
+     * @param int           $moveTime
+     * @param callable      $callback
+     *
      * @return Move
      */
-    public function getBestMoveFromFen(string $fen = self::START_POSITION, int $moveTime = 3000): Move
+    public function getBestMoveFromFen(string $fen = self::START_POSITION, int $moveTime = 3000, callable $callback = null): Move
     {
         $this->sendCommand('position fen '.$fen);
 
         $this->sendGo($moveTime);
 
-        return $this->searchBestMove($this->pipes[1]);
+        return $this->searchBestMove($this->pipes[1], $callback);
+    }
+
+    private function setErrorHandlers()
+    {
+        set_error_handler(
+            function () {
+                $this->shutDown();
+            },
+            E_ALL
+        );
+
+        set_exception_handler(
+            function (Throwable $exception) {
+                $this->shutDown();
+                throw $exception;
+            }
+        );
+    }
+
+    /**
+     * @param string        $fen startpos by default
+     * @param callable|null $callable
+     *
+     * @return void
+     */
+    public function runInfiniteAnalyze(string $fen = self::START_POSITION, callable $callable = null): void
+    {
+        $this->stopRunningProcess();
+
+        $this->process = $this->pool->add(
+            function () use ($callable, $fen) {
+                $this->sendCommand('position fen ' . $fen);
+                $this->sendCommand('go infinite');
+                do {
+                    $content = fgets($this->pipes[1]);
+
+                    if ($callable) {
+                        call_user_func($callable, $content);
+                    }
+
+                    if (empty($content)) {
+                        throw new BotIsFailedException;
+                    }
+                } while (true);
+            }
+        )->catch(
+            function (Throwable $throwable) {
+                $this->shutDown();
+            }
+        );
+    }
+
+    private function stopRunningProcess(): void
+    {
+        try {
+            if ($this->process instanceof ParallelProcess) {
+                $this->process->stop();
+                $this->pool->markAsFinished($this->process);
+            }
+        } catch (TypeError $exception) {
+            $this->stopRunningProcess();
+        }
     }
 
     /**
@@ -149,13 +222,22 @@ class ChessBestMove
     }
 
     /**
-     * @param resource $handle
+     * @param resource      $handle
+     * @param callable|null $callback
+     *
      * @return Move
      */
-    public function searchBestMove($handle)
+    public function searchBestMove($handle = null, callable $callback = null)
     {
+        if (!$handle) {
+            $handle = $this->pipes[1];
+        }
+
         try {
-            return $this->parseBestMove($content = $this->waitFor('bestmove', $handle, [$this, 'searchScore']));
+            if (!$callback) {
+                $callback = [$this, 'searchScore'];
+            }
+            return $this->parseBestMove($content = $this->waitFor('bestmove', $handle, $callback));
         } catch (NotValidBestMoveHaystackException $e) {
             /** @var string $content */
             return $this->parseBestMove($content.' '.fgets($handle));
@@ -192,6 +274,8 @@ class ChessBestMove
         if (is_resource($this->resource)) {
             @proc_close($this->resource);
         }
+
+        $this->stopRunningProcess();
     }
 
     /**
@@ -251,19 +335,25 @@ class ChessBestMove
      */
     private function sendGo(int $moveTime)
     {
-        fwrite(
-            $this->pipes[0],
-            'go movetime '.$moveTime.PHP_EOL
-        );
+        if ($moveTime === 0) {
+            $this->sendCommand('go infinite');
+
+            return;
+        }
+
+        $this->sendCommand('go movetime '.$moveTime);
     }
 
     /**
      * @param string $command
      * @return int
      */
-    private function sendCommand(string $command)
+    public function sendCommand(string $command)
     {
-        $this->logger->debug('SEND: '.$command);
+        if (!is_resource($this->resource)) {
+            $this->startGame();
+        }
+
         return fwrite($this->pipes[0], $command.PHP_EOL);
     }
 
