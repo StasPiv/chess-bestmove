@@ -10,6 +10,7 @@ namespace StasPiv\ChessBestMove\Service;
 
 use JMS\Serializer\SerializerBuilder;
 use Psr\Log\LoggerInterface;
+use Spatie\Async\Output\ParallelError;
 use Spatie\Async\Pool;
 use Spatie\Async\Process\ParallelProcess;
 use StasPiv\ChessBestMove\Exception\BotIsFailedException;
@@ -159,6 +160,9 @@ class ChessBestMove
             }
         )->catch(
             function (Throwable $throwable) {
+                if ($throwable instanceof ParallelError) {
+                    return;
+                }
                 $this->shutDown();
             }
         );
