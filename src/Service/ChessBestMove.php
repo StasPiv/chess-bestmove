@@ -63,7 +63,7 @@ class ChessBestMove
      * @return bool
      * @throws ResourceUnavailableException
      */
-    public function startGame()
+    private function startGame()
     {
         $this->setErrorHandlers();
 
@@ -181,61 +181,12 @@ class ChessBestMove
     }
 
     /**
-     * @param array|Move[] $moves
-     * @param int $moveTime
-     * @param string $startPosition
-     * @return Move
-     */
-    public function getBestMoveFromMovesArray(
-        array $moves, int $moveTime = 3000, string $startPosition = self::START_POSITION
-    ): Move
-    {
-        $moveString = implode(' ', array_map(
-            function (Move $move)
-            {
-                return $move;
-            },
-            $moves
-        ));
-
-        $this->sendCommand('position fen '.$startPosition.' moves '.$moveString);
-
-        $this->sendGo($moveTime);
-
-        return $this->searchBestMove($this->pipes[1]);
-    }
-
-    /**
-     * @param array  $movesArray
-     * @param int    $wtime
-     * @param int    $btime
-     * @param string $startPosition
-     * @return Move
-     */
-    public function getBestMoveFrom2DimensionalMovesArray(
-        array $movesArray,
-        int $wtime = 3000,
-        int $btime = 3000,
-        string $startPosition = self::START_POSITION
-    ): Move
-    {
-        return $this->getBestMoveFromMovesArray(
-            array_map(
-                function (array $moveArray) {
-                    return $this->buildMoveFromArray($moveArray);
-                },
-                $movesArray
-            ), $wtime, $startPosition
-        );
-    }
-
-    /**
      * @param resource      $handle
      * @param callable|null $callback
      *
      * @return Move
      */
-    public function searchBestMove($handle = null, callable $callback = null)
+    private function searchBestMove($handle = null, callable $callback = null)
     {
         if (!$handle) {
             $handle = $this->pipes[1];
@@ -314,7 +265,7 @@ class ChessBestMove
      * @return Move
      * @throws NotValidBestMoveHaystackException
      */
-    public function parseBestMove(string $content)
+    private function parseBestMove(string $content)
     {
         if (!preg_match(
             "/bestmove\s*(?P<from>[a-h]\d)(?P<to>[a-h]\d)(?P<promotion>\w)?/i",

@@ -9,6 +9,7 @@
 namespace StasPiv\ChessBestMove\Tests;
 
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use StasPiv\ChessBestMove\Exception\GameOverException;
 use StasPiv\ChessBestMove\Model\EngineConfiguration;
 use StasPiv\ChessBestMove\Model\Move;
@@ -82,7 +83,7 @@ class ChessBestMoveServiceTest extends TestCase
         $handler = fopen('/tmp/test.txt', 'w+');
         fwrite($handler, 'bestmove f4h6');
 
-        $move = $this->chessBestMoveService->searchBestMove(fopen('/tmp/test.txt', 'r'));
+        $move = $this->testProtectedMethod('searchBestMove', [fopen('/tmp/test.txt', 'r')]);
 
         $this->assertInstanceOf(Move::class, $move);
         $this->assertEquals((new Move())->setFrom('f4')->setTo('h6'), $move);
@@ -94,47 +95,31 @@ class ChessBestMoveServiceTest extends TestCase
         fwrite($handler, 'bestmove'.PHP_EOL);
         fwrite($handler, 'f4h6');
 
-        $move = $this->chessBestMoveService->searchBestMove(fopen('/tmp/test.txt', 'r'));
+        $move = $this->testProtectedMethod('searchBestMove', [fopen('/tmp/test.txt', 'r')]);
 
         $this->assertInstanceOf(Move::class, $move);
         $this->assertEquals((new Move())->setFrom('f4')->setTo('h6'), $move);
-    }
-
-    public function testGetBestMoveFromMoveArray()
-    {
-        $moveArray = [
-            (new Move())->setFrom('d2')->setTo('d4')
-        ];
-
-        $move = $this->chessBestMoveService->getBestMoveFromMovesArray($moveArray);
-
-        $this->assertInstanceOf(Move::class, $move);
-    }
-
-    public function testGetBestMoveFromMoveArray2Dimensional()
-    {
-        $moveArray = [
-            [
-                'from' => 'e2',
-                'to' => 'e4'
-            ],
-            [
-                'from' => 'c7',
-                'to' => 'c5'
-            ],
-        ];
-
-        $move = $this->chessBestMoveService->getBestMoveFrom2DimensionalMovesArray($moveArray);
-
-        $this->assertInstanceOf(Move::class, $move);
-
-        self::assertNotEquals((new Move())->setFrom('d2')->setTo('d4'), $move);
     }
 
     public function testParseBestMoveNone()
     {
         $this->setExpectedException(GameOverException::class);
 
-        $this->chessBestMoveService->parseBestMove('bestmove (none)');
+        $this->testProtectedMethod('parseBestMove', ['bestmove (none)']);
+    }
+
+    /**
+     * @param string $method
+     * @param array  $args
+     *
+     * @return mixed
+     * @throws \ReflectionException
+     */
+    private function testProtectedMethod(string $method, array $args)
+    {
+        $class = new ReflectionClass(ChessBestMove::class);
+        $method = $class->getMethod($method);
+        $method->setAccessible(true);
+        return $method->invokeArgs($this->chessBestMoveService, $args);
     }
 }
