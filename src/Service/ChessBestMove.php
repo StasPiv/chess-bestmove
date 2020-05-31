@@ -49,6 +49,7 @@ class ChessBestMove
 
     /**
      * ChessBestMove constructor.
+     *
      * @param EngineConfiguration $engineConfiguration
      * @param LoggerInterface     $logger
      */
@@ -60,73 +61,34 @@ class ChessBestMove
     }
 
     /**
-     * @return bool
-     * @throws ResourceUnavailableException
-     */
-    private function startGame()
-    {
-        $this->setErrorHandlers();
-
-        $this->resource = proc_open(
-            '/usr/games/polyglot -ec /usr/games/' . $this->engineConfiguration->getEngine(),
-            [
-                0 => ["pipe", "r"],
-                1 => ["pipe", "w"],
-                2 => ["file", "/tmp/uci_err", "w+"]
-            ],
-            $this->pipes,
-            $this->engineConfiguration->getPathToPolyglotRunDir(),
-            []
-        );
-
-        if (!is_resource($this->resource)) {
-            throw new ResourceUnavailableException;
-        }
-
-        $this->sendCommand('uci');
-        $this->waitFor('uciok', $this->pipes[1]);
-        $this->sendCommand('ucinewgame');
-        $this->sendCommand('isready');
-        $this->waitFor('readyok', $this->pipes[1]);
-
-        foreach ($this->engineConfiguration->getOptions() as $name => $value) {
-            $this->sendCommand('setoption name '.$name.' value '.$value);
-        }
-
-        return true;
-    }
-
-    /**
-     * @param string        $fen startpos by default
-     * @param int           $moveTime
-     * @param callable      $callback
+     * @param string   $fen startpos by default
+     * @param int      $moveTime
+     * @param callable $callback
      *
      * @return Move
      */
     public function getBestMoveFromFen(string $fen = self::START_POSITION, int $moveTime = 3000, callable $callback = null): Move
     {
-        $this->sendCommand('position fen '.$fen);
+        $this->sendCommand('position fen ' . $fen);
 
         $this->sendGo($moveTime);
 
         return $this->searchBestMove($this->pipes[1], $callback);
     }
 
-    private function setErrorHandlers()
+    public function shutDown()
     {
-        set_error_handler(
-            function () {
-                $this->shutDown();
-            },
-            E_ALL
-        );
-
-        set_exception_handler(
-            function (Throwable $exception) {
-                $this->shutDown();
-                throw $exception;
+        for ($i = 0; $i <= 2; $i++) {
+            if (isset($this->pipes[$i])) {
+                @fclose($this->pipes[$i]);
             }
-        );
+        }
+
+        if (is_resource($this->resource)) {
+            @proc_close($this->resource);
+        }
+
+        $this->stopRunningProcess();
     }
 
     /**
@@ -168,6 +130,87 @@ class ChessBestMove
         );
     }
 
+    /**
+     * @return int
+     */
+    public function getCurrentScore(): int
+    {
+        return $this->currentScore;
+    }
+
+    public function __destruct()
+    {
+        $this->shutDown();
+    }
+
+    /**
+     * @param string $command
+     *
+     * @return int
+     */
+    private function sendCommand(string $command)
+    {
+        if (!is_resource($this->resource)) {
+            $this->startGame();
+        }
+
+        return fwrite($this->pipes[0], $command . PHP_EOL);
+    }
+
+    /**
+     * @return bool
+     * @throws ResourceUnavailableException
+     */
+    private function startGame()
+    {
+        $this->setErrorHandlers();
+
+        $this->resource = proc_open(
+            '/usr/games/polyglot -ec /usr/games/' . $this->engineConfiguration->getEngine(),
+            [
+                0 => ["pipe", "r"],
+                1 => ["pipe", "w"],
+                2 => ["file", "/tmp/uci_err", "w+"]
+            ],
+            $this->pipes,
+            $this->engineConfiguration->getPathToPolyglotRunDir(),
+            []
+        );
+
+        if (!is_resource($this->resource)) {
+            throw new ResourceUnavailableException;
+        }
+
+        $this->sendCommand('uci');
+        $this->waitFor('uciok', $this->pipes[1]);
+        $this->sendCommand('ucinewgame');
+        $this->sendCommand('isready');
+        $this->waitFor('readyok', $this->pipes[1]);
+
+        foreach ($this->engineConfiguration->getOptions() as $name => $value) {
+            $this->sendCommand('setoption name ' . $name . ' value ' . $value);
+        }
+
+        return true;
+    }
+
+    private function setErrorHandlers()
+    {
+        set_error_handler(
+            function () {
+                $this->shutDown();
+            },
+            E_ALL
+        );
+
+        set_exception_handler(
+            function (Throwable $exception) {
+                $this->shutDown();
+                throw $exception;
+            }
+        );
+    }
+
     private function stopRunningProcess(): void
     {
         try {
@@ -178,6 +221,44 @@ class ChessBestMove
         } catch (TypeError $exception) {
             $this->stopRunningProcess();
         }
+    }
+
+    /**
+     * @param               $needle
+     * @param               $handle
+     * @param callable|null $callable
+     *
+     * @return string
+     */
+    private function waitFor($needle, $handle, callable $callable = null): string
+    {
+        do {
+            $content = fgets($handle);
+
+            if ($callable) {
+                call_user_func($callable, $content);
+            }
+
+            if (empty($content)) {
+                throw new BotIsFailedException;
+            }
+        } while (strpos($content, $needle) === false);
+
+        return $content;
+    }
+
+    /**
+     * @param int $moveTime
+     */
+    private function sendGo(int $moveTime)
+    {
+        if ($moveTime === 0) {
+            $this->sendCommand('go infinite');
+
+            return;
+        }
+
+        $this->sendCommand('go movetime ' . $moveTime);
     }
 
     /**
@@ -199,69 +280,13 @@ class ChessBestMove
             return $this->parseBestMove($content = $this->waitFor('bestmove', $handle, $callback));
         } catch (NotValidBestMoveHaystackException $e) {
             /** @var string $content */
-            return $this->parseBestMove($content.' '.fgets($handle));
+            return $this->parseBestMove($content . ' ' . fgets($handle));
         }
-    }
-
-    /**
-     * @return int
-     */
-    public function getCurrentScore(): int
-    {
-        return $this->currentScore;
-    }
-
-    private function searchScore(string $content)
-    {
-        if (preg_match('/score (.+) nodes/', $content, $matches)) {
-            if (preg_match('/mate (\-?\d+)/', $matches[1], $matchesEstimation)) {
-                $this->currentScore = $matchesEstimation[1] > 0 ? 99999 : -99999;
-            } elseif (preg_match('/cp (\-?\d+)/', $matches[1], $matchesEstimation)) {
-                $this->currentScore = $matchesEstimation[1];
-            }
-        }
-    }
-
-    public function shutDown()
-    {
-        for ($i=0; $i<=2; $i++) {
-            if (isset($this->pipes[$i])) {
-                @fclose($this->pipes[$i]);
-            }
-        }
-
-        if (is_resource($this->resource)) {
-            @proc_close($this->resource);
-        }
-
-        $this->stopRunningProcess();
-    }
-
-    /**
-     * @param $needle
-     * @param $handle
-     * @param callable|null $callable
-     * @return string
-     */
-    private function waitFor($needle, $handle, callable $callable = null): string
-    {
-        do {
-            $content = fgets($handle);
-
-            if ($callable) {
-                call_user_func($callable, $content);
-            }
-
-            if (empty($content)) {
-                throw new BotIsFailedException;
-            }
-        } while (strpos($content, $needle) === false);
-
-        return $content;
     }
 
     /**
      * @param string $content
+     *
      * @return Move
      * @throws NotValidBestMoveHaystackException
      */
@@ -275,7 +300,7 @@ class ChessBestMove
             if (strpos($content, '(none)')) {
                 throw new GameOverException();
             }
-            
+
             throw new NotValidBestMoveHaystackException;
         }
 
@@ -284,45 +309,25 @@ class ChessBestMove
         return $this->buildMoveFromArray($moveArray);
     }
 
-    public function __destruct()
-    {
-        $this->shutDown();
-    }
-
-    /**
-     * @param int $moveTime
-     */
-    private function sendGo(int $moveTime)
-    {
-        if ($moveTime === 0) {
-            $this->sendCommand('go infinite');
-
-            return;
-        }
-
-        $this->sendCommand('go movetime '.$moveTime);
-    }
-
-    /**
-     * @param string $command
-     * @return int
-     */
-    public function sendCommand(string $command)
-    {
-        if (!is_resource($this->resource)) {
-            $this->startGame();
-        }
-
-        return fwrite($this->pipes[0], $command.PHP_EOL);
-    }
-
     /**
      * @param array $moveArray
+     *
      * @return Move
      */
     private function buildMoveFromArray(array $moveArray): Move
     {
         return SerializerBuilder::create()->build()->deserialize(json_encode($moveArray), Move::class, 'json');
+    }
+
+    private function searchScore(string $content)
+    {
+        if (preg_match('/score (.+) nodes/', $content, $matches)) {
+            if (preg_match('/mate (\-?\d+)/', $matches[1], $matchesEstimation)) {
+                $this->currentScore = $matchesEstimation[1] > 0 ? 99999 : -99999;
+            } elseif (preg_match('/cp (\-?\d+)/', $matches[1], $matchesEstimation)) {
+                $this->currentScore = $matchesEstimation[1];
+            }
+        }
     }
 
     private function restartProcess()
