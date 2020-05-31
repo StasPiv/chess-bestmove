@@ -21,6 +21,7 @@ use StasPiv\ChessBestMove\Model\EngineConfiguration;
 use StasPiv\ChessBestMove\Model\Move;
 use Throwable;
 use TypeError;
+use WebSocket\Client;
 
 class ChessBestMove
 {
@@ -46,18 +47,21 @@ class ChessBestMove
     private $process;
     private $pool;
     private $infiniteStarted = false;
+    private $wsClient;
 
     /**
      * ChessBestMove constructor.
      *
-     * @param EngineConfiguration $engineConfiguration
-     * @param LoggerInterface     $logger
+     * @param EngineConfiguration    $engineConfiguration
+     * @param LoggerInterface        $logger
+     * @param Client $wsClient
      */
-    public function __construct(EngineConfiguration $engineConfiguration, LoggerInterface $logger = null)
+    public function __construct(EngineConfiguration $engineConfiguration, LoggerInterface $logger = null, Client $wsClient = null)
     {
         $this->engineConfiguration = $engineConfiguration;
         $this->logger = $logger;
         $this->pool = Pool::create();
+        $this->wsClient = $wsClient;
     }
 
     /**
@@ -79,17 +83,16 @@ class ChessBestMove
     }
 
     /**
-     * @param string        $fen startpos by default
-     * @param callable|null $callable
+     * @param string $fen startpos by default
      *
      * @return void
      */
-    public function runInfiniteAnalyze(string $fen = self::START_POSITION, callable $callable = null): void
+    public function runInfiniteAnalyze(string $fen = self::START_POSITION): void
     {
         $this->stopRunningProcess();
 
         $this->process = $this->pool->add(
-            function () use ($callable, $fen) {
+            function () use ($fen) {
                 $this->sendCommand('position fen ' . $fen);
                 if (!$this->infiniteStarted) {
                     $this->sendCommand('go infinite');
@@ -98,8 +101,8 @@ class ChessBestMove
                 do {
                     $content = fgets($this->pipes[1]);
 
-                    if ($callable) {
-                        call_user_func($callable, $content);
+                    if (preg_match('/seldepth/', $content)) {
+                        $this->wsClient->send('Engine output: ' . $content);
                     }
 
                     if (empty($content)) {
