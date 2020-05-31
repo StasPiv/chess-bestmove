@@ -64,16 +64,19 @@ class ChessBestMove
      * @param string   $fen startpos by default
      * @param int      $moveTime
      * @param callable $callback
+     * @param null     $currentScore
      *
      * @return Move
      */
-    public function getBestMoveFromFen(string $fen = self::START_POSITION, int $moveTime = 3000, callable $callback = null): Move
+    public function getBestMoveFromFen(string $fen = self::START_POSITION, int $moveTime = 3000, callable $callback = null, &$currentScore = null): Move
     {
         $this->sendCommand('position fen ' . $fen);
 
         $this->sendGo($moveTime);
+        $bestMove = $this->searchBestMove($this->pipes[1], $callback);
+        $currentScore = $this->currentScore;
 
-        return $this->searchBestMove($this->pipes[1], $callback);
+        return $bestMove;
     }
 
     public function shutDown()
@@ -128,14 +131,6 @@ class ChessBestMove
                 $this->shutDown();
             }
         );
-    }
-
-    /**
-     * @return int
-     */
-    public function getCurrentScore(): int
-    {
-        return $this->currentScore;
     }
 
     public function __destruct()
