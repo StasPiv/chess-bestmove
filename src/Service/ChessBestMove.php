@@ -79,21 +79,6 @@ class ChessBestMove
         return $bestMove;
     }
 
-    public function shutDown()
-    {
-        for ($i = 0; $i <= 2; $i++) {
-            if (isset($this->pipes[$i])) {
-                @fclose($this->pipes[$i]);
-            }
-        }
-
-        if (is_resource($this->resource)) {
-            @proc_close($this->resource);
-        }
-
-        $this->stopRunningProcess();
-    }
-
     /**
      * @param string        $fen startpos by default
      * @param callable|null $callable
@@ -136,6 +121,21 @@ class ChessBestMove
     public function __destruct()
     {
         $this->shutDown();
+    }
+
+    private function shutDown()
+    {
+        for ($i = 0; $i <= 2; $i++) {
+            if (isset($this->pipes[$i])) {
+                @fclose($this->pipes[$i]);
+            }
+        }
+
+        if (is_resource($this->resource)) {
+            @proc_close($this->resource);
+        }
+
+        $this->stopRunningProcess();
     }
 
     /**
