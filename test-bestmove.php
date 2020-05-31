@@ -14,10 +14,7 @@ $testEngineConfiguration->setPathToPolyglotRunDir(__DIR__);
 $chessBestMoveService = new ChessBestMove($testEngineConfiguration, new \StasPiv\ChessBestMove\Tests\Mock\MockLogger());
 
 $bestMove = $chessBestMoveService->getBestMoveFromFen(
-    '2k5/Q2r4/2pn4/P2p1P2/1P1K4/8/8/8 w - - 0 1',
-        3000,
-        null,
-        $score
+    '2k5/Q2r4/2pn4/P2p1P2/1P1K4/8/8/8 w - - 0 1', 3000, $score
 );
 
 echo $bestMove . PHP_EOL;

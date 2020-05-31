@@ -61,19 +61,18 @@ class ChessBestMove
     }
 
     /**
-     * @param string   $fen startpos by default
-     * @param int      $moveTime
-     * @param callable $callback
-     * @param null     $currentScore
+     * @param string $fen startpos by default
+     * @param int    $moveTime
+     * @param null   $currentScore
      *
      * @return Move
      */
-    public function getBestMoveFromFen(string $fen = self::START_POSITION, int $moveTime = 3000, callable $callback = null, &$currentScore = null): Move
+    public function getBestMoveFromFen(string $fen = self::START_POSITION, int $moveTime = 3000, &$currentScore = null): Move
     {
         $this->sendCommand('position fen ' . $fen);
 
         $this->sendGo($moveTime);
-        $bestMove = $this->searchBestMove($this->pipes[1], $callback);
+        $bestMove = $this->searchBestMove($this->pipes[1]);
         $currentScore = $this->currentScore;
 
         return $bestMove;
@@ -257,21 +256,18 @@ class ChessBestMove
     }
 
     /**
-     * @param resource      $handle
-     * @param callable|null $callback
+     * @param resource $handle
      *
      * @return Move
      */
-    private function searchBestMove($handle = null, callable $callback = null)
+    private function searchBestMove($handle = null)
     {
         if (!$handle) {
             $handle = $this->pipes[1];
         }
 
         try {
-            if (!$callback) {
-                $callback = [$this, 'searchScore'];
-            }
+            $callback = [$this, 'searchScore'];
             return $this->parseBestMove($content = $this->waitFor('bestmove', $handle, $callback));
         } catch (NotValidBestMoveHaystackException $e) {
             /** @var string $content */
