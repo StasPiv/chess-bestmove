@@ -6,13 +6,7 @@
     "authors": [
         {
             "name": "Stanislav Pivovartsev",
-            "email": "stanislav_pivovartsev@mail.ru"
-        }
-    ],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/StasPiv/async.git"
+            "email": "staspivovartsev@gmail.com"
         }
     ],
     "minimum-stability": "stable",
