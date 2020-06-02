@@ -50,6 +50,7 @@ while (true) {
         if ($message == 'stop-infinite') {
             $bestMove->stopInfinite();
         }
+        continue;
     } catch (Throwable $exception) {
         echo $exception->getMessage() . PHP_EOL;
         continue;

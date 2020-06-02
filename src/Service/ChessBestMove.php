@@ -10,17 +10,12 @@ namespace StasPiv\ChessBestMove\Service;
 
 use JMS\Serializer\SerializerBuilder;
 use Psr\Log\LoggerInterface;
-use Spatie\Async\Pool;
-use Spatie\Async\Process\ParallelProcess;
 use StasPiv\ChessBestMove\Exception\BotIsFailedException;
 use StasPiv\ChessBestMove\Exception\GameOverException;
 use StasPiv\ChessBestMove\Exception\NotValidBestMoveHaystackException;
 use StasPiv\ChessBestMove\Exception\ResourceUnavailableException;
 use StasPiv\ChessBestMove\Model\EngineConfiguration;
 use StasPiv\ChessBestMove\Model\Move;
-use Throwable;
-use TypeError;
-use WebSocket\Client;
 
 class ChessBestMove
 {
@@ -41,8 +36,7 @@ class ChessBestMove
 
     private $currentScore = -9999;
 
-    private $process;
-    private $pool;
+    private $readingProcess;
 
     /**
      * ChessBestMove constructor.
@@ -54,7 +48,6 @@ class ChessBestMove
     {
         $this->engineConfiguration = $engineConfiguration;
         $this->logger = $logger;
-        $this->pool = Pool::create();
     }
 
     /**
@@ -88,33 +81,21 @@ class ChessBestMove
     public function startInfinite(string $fen, string $wsUrl): void
     {
         if (!is_resource($this->resource)) {
+            @unlink('engine.log');
             $this->startGame();
-            $this->process = $this->pool->add(
-                function () use ($wsUrl) {
-                    $handle = fopen('engine.log', 'r');
-                    $wsClient = new Client(
-                        $wsUrl,
-                        [
-                            'timeout' => 60 * 60 * 24
-                        ]
-                    );
+        }
 
-                    while (true) {
-                        $line = stream_get_line($handle, 1024, PHP_EOL);
-
-                        if (false === strpos($line, 'Adapter->GUI:')) {
-                            continue;
-                        }
-
-                        $cleanLine = preg_replace('/(.+: )/', '', $line);
-                        $wsClient->send('Engine output: ' . $cleanLine);
-                    }
-                }
+        if (!is_resource($this->readingProcess)) {
+            $this->readingProcess = proc_open(
+                './read-engine.php',
+                [],
+                $pipes
             );
         }
 
-        $this->stopInfinite();
-
+        $this->sendCommand('stop');
+        $this->sendCommand('isready');
+        $this->waitFor('readyok', $this->pipes[1]);
         $this->sendCommand('position fen ' . $fen);
         $this->sendCommand('go infinite');
     }
@@ -140,7 +121,6 @@ class ChessBestMove
      */
     private function startGame()
     {
-        unlink('engine.log');
         $this->resource = proc_open(
             '/usr/games/polyglot -ec /usr/games/' . $this->engineConfiguration->getEngine() . ' ' .
             '-log true -lf "engine.log"',
@@ -169,18 +149,6 @@ class ChessBestMove
         }
 
         return true;
-    }
-
-    private function stopRunningProcess(): void
-    {
-        try {
-            if ($this->process instanceof ParallelProcess) {
-                $this->process->stop();
-                $this->pool->markAsFinished($this->process);
-            }
-        } catch (TypeError $exception) {
-            $this->stopRunningProcess();
-        }
     }
 
     /**
