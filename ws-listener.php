@@ -44,11 +44,11 @@ while (true) {
 
     try {
         if (preg_match('/^start-infinite (.+)$/', $message, $matches)) {
-            $bestMove->runInfiniteAnalyze($matches[1], $wsUrl);
+            $bestMove->startInfinite($matches[1], $wsUrl);
         }
 
         if ($message == 'stop-infinite') {
-            $bestMove->stopInfiniteAnalyze();
+            $bestMove->stopInfinite();
         }
     } catch (Throwable $exception) {
         echo $exception->getMessage() . PHP_EOL;

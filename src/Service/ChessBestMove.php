@@ -85,7 +85,7 @@ class ChessBestMove
      *
      * @return void
      */
-    public function runInfiniteAnalyze(string $fen, string $wsUrl): void
+    public function startInfinite(string $fen, string $wsUrl): void
     {
         if (!is_resource($this->resource)) {
             $this->startGame();
@@ -113,13 +113,13 @@ class ChessBestMove
             );
         }
 
-        $this->stopInfiniteAnalyze();
+        $this->stopInfinite();
 
         $this->sendCommand('position fen ' . $fen);
         $this->sendCommand('go infinite');
     }
 
-    public function stopInfiniteAnalyze()
+    public function stopInfinite()
     {
         $this->sendCommand('stop');
     }
