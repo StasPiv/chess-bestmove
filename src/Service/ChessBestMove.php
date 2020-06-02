@@ -10,7 +10,6 @@ namespace StasPiv\ChessBestMove\Service;
 
 use JMS\Serializer\SerializerBuilder;
 use Psr\Log\LoggerInterface;
-use Spatie\Async\Output\ParallelError;
 use Spatie\Async\Pool;
 use Spatie\Async\Process\ParallelProcess;
 use StasPiv\ChessBestMove\Exception\BotIsFailedException;
@@ -25,8 +24,6 @@ use WebSocket\Client;
 
 class ChessBestMove
 {
-    const START_POSITION = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-
     private $resource;
 
     /** @var array */
@@ -46,38 +43,37 @@ class ChessBestMove
 
     private $process;
     private $pool;
-    private $infiniteStarted = false;
-    private $wsClient;
 
     /**
      * ChessBestMove constructor.
      *
-     * @param EngineConfiguration    $engineConfiguration
-     * @param LoggerInterface        $logger
-     * @param Client $wsClient
+     * @param EngineConfiguration $engineConfiguration
+     * @param LoggerInterface     $logger
      */
-    public function __construct(EngineConfiguration $engineConfiguration, LoggerInterface $logger = null, Client $wsClient = null)
+    public function __construct(EngineConfiguration $engineConfiguration, LoggerInterface $logger = null)
     {
         $this->engineConfiguration = $engineConfiguration;
         $this->logger = $logger;
         $this->pool = Pool::create();
-        $this->wsClient = $wsClient;
     }
 
     /**
      * @param string $fen startpos by default
      * @param int    $moveTime
-     * @param null   $currentScore
      *
      * @return Move
      */
-    public function getBestMoveFromFen(string $fen = self::START_POSITION, int $moveTime = 3000, &$currentScore = null): Move
+    public function getBestMoveFromFen(string $fen, int $moveTime = 3000): Move
     {
+        if (!is_resource($this->resource)) {
+            $this->startGame();
+        }
+
         $this->sendCommand('position fen ' . $fen);
 
         $this->sendGo($moveTime);
         $bestMove = $this->searchBestMove($this->pipes[1]);
-        $currentScore = $this->currentScore;
+        $bestMove->setScore($this->currentScore);
 
         return $bestMove;
     }
@@ -85,59 +81,47 @@ class ChessBestMove
     /**
      * @param string $fen startpos by default
      *
+     * @param string $wsUrl
+     *
      * @return void
      */
-    public function runInfiniteAnalyze(string $fen = self::START_POSITION): void
+    public function runInfiniteAnalyze(string $fen, string $wsUrl): void
     {
-        $this->stopRunningProcess();
+        if (!is_resource($this->resource)) {
+            $this->startGame();
+            $this->process = $this->pool->add(
+                function () use ($wsUrl) {
+                    $handle = fopen('engine.log', 'r');
+                    $wsClient = new Client(
+                        $wsUrl,
+                        [
+                            'timeout' => 60 * 60 * 24
+                        ]
+                    );
 
-        $this->process = $this->pool->add(
-            function () use ($fen) {
-                $this->sendCommand('position fen ' . $fen);
-                if (!$this->infiniteStarted) {
-                    $this->sendCommand('go infinite');
-                    $this->infiniteStarted = true;
-                }
-                do {
-                    $content = fgets($this->pipes[1]);
+                    while (true) {
+                        $line = stream_get_line($handle, 1024, PHP_EOL);
 
-                    if (preg_match('/seldepth/', $content)) {
-                        $this->wsClient->send('Engine output: ' . $content);
+                        if (false === strpos($line, 'Adapter->GUI:')) {
+                            continue;
+                        }
+
+                        $cleanLine = preg_replace('/(.+: )/', '', $line);
+                        $wsClient->send('Engine output: ' . $cleanLine);
                     }
-
-                    if (empty($content)) {
-                        throw new BotIsFailedException;
-                    }
-                } while (true);
-            }
-        )->catch(
-            function (Throwable $throwable) {
-                if ($throwable instanceof ParallelError) {
-                    return;
                 }
-                $this->shutDown();
-            }
-        );
-    }
-
-    public function __destruct()
-    {
-        $this->shutDown();
-    }
-
-    private function shutDown()
-    {
-        for ($i = 0; $i <= 2; $i++) {
-            if (isset($this->pipes[$i])) {
-                @fclose($this->pipes[$i]);
-            }
+            );
         }
 
-        if (is_resource($this->resource)) {
-            @proc_close($this->resource);
-        }
+        $this->stopInfiniteAnalyze();
 
-        $this->stopRunningProcess();
+        $this->sendCommand('position fen ' . $fen);
+        $this->sendCommand('go infinite');
+    }
+
+    public function stopInfiniteAnalyze()
+    {
+        $this->sendCommand('stop');
     }
 
     /**
@@ -147,10 +131,6 @@ class ChessBestMove
      */
     private function sendCommand(string $command)
     {
-        if (!is_resource($this->resource)) {
-            $this->startGame();
-        }
-
         return fwrite($this->pipes[0], $command . PHP_EOL);
     }
 
@@ -160,10 +140,10 @@ class ChessBestMove
      */
     private function startGame()
     {
-        $this->setErrorHandlers();
-
+        unlink('engine.log');
         $this->resource = proc_open(
-            '/usr/games/polyglot -ec /usr/games/' . $this->engineConfiguration->getEngine(),
+            '/usr/games/polyglot -ec /usr/games/' . $this->engineConfiguration->getEngine() . ' ' .
+            '-log true -lf "engine.log"',
             [
                 0 => ["pipe", "r"],
                 1 => ["pipe", "w"],
@@ -189,23 +169,6 @@ class ChessBestMove
         }
 
         return true;
-    }
-
-    private function setErrorHandlers()
-    {
-        set_error_handler(
-            function () {
-                $this->shutDown();
-            },
-            E_ALL
-        );
-
-        set_exception_handler(
-            function (Throwable $exception) {
-                $this->shutDown();
-                throw $exception;
-            }
-        );
     }
 
     private function stopRunningProcess(): void
@@ -322,11 +285,5 @@ class ChessBestMove
                 $this->currentScore = $matchesEstimation[1];
             }
         }
-    }
-
-    private function restartProcess()
-    {
-        $this->shutDown();
-        $this->startGame();
     }
 }

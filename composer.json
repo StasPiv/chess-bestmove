@@ -21,7 +21,12 @@
         "indigophp/doctrine-annotation-autoload": "^0.1.0",
         "psr/log": "1.0.0",
         "spatie/async": "^1.1",
-        "textalk/websocket": "1.2.0"
+        "textalk/websocket": "1.2.0",
+        "symfony/web-server-bundle": "^4.4",
+        "ext-json": "*",
+        "guzzlehttp/guzzle": "^6.5",
+        "opis/closure": "3.5.1",
+        "ext-posix": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "~5.2"

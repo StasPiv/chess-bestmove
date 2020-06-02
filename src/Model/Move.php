@@ -34,6 +34,13 @@ class Move
     private $promotion;
 
     /**
+     * @var integer
+     *
+     * @JMS\Type("integer")
+     */
+    private $score;
+
+    /**
      * @return string
      */
     public function getFrom(): string
@@ -87,6 +94,25 @@ class Move
     {
         $this->promotion = $promotion;
 
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getScore(): int
+    {
+        return $this->score;
+    }
+
+    /**
+     * @param int $score
+     *
+     * @return Move
+     */
+    public function setScore(int $score): Move
+    {
+        $this->score = $score;
         return $this;
     }
 
