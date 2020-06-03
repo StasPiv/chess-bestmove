@@ -1,4 +1,4 @@
-#!/usr/bin/env php7.4
+#!/usr/bin/env php
 <?php
 
 require_once 'vendor/autoload.php';
@@ -9,7 +9,7 @@ use StasPiv\ChessBestMove\Service\ChessBestMove;
 use WebSocket\Client;
 use WebSocket\ConnectionException;
 
-$wsUrl = isset($argv[1]) ? $argv[1] : 'ws://localhost:8000';
+$wsUrl = isset($argv[1]) ? $argv[1] : 'ws://websockets:8000';
 $wsClient = new Client(
     $wsUrl,
     [

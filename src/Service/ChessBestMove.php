@@ -81,16 +81,8 @@ class ChessBestMove
     public function startInfinite(string $fen, string $wsUrl): void
     {
         if (!is_resource($this->resource)) {
-            @unlink('engine.log');
+            file_put_contents('engine.log', '');
             $this->startGame();
-        }
-
-        if (!is_resource($this->readingProcess)) {
-            $this->readingProcess = proc_open(
-                './read-engine.php',
-                [],
-                $pipes
-            );
         }
 
         $this->sendCommand('stop');
