@@ -40,7 +40,7 @@ class ChessBestMoveServiceTest extends TestCase
 
         $this->testEngineConfiguration->setPathToPolyglotRunDir('/home/user/chess-train');
 
-        $this->chessBestMoveService = new ChessBestMove($this->testEngineConfiguration, new MockLogger());
+        $this->chessBestMoveService = new ChessBestMove($this->testEngineConfiguration);
 
     }
 

@@ -15,7 +15,7 @@ $router = new Router(new ChessBestMove(
         ->addOption('Clear Hash', 1)
         ->addOption('Contempt', 0)
         ->addOption('multipv', 2)
-        ->setPathToPolyglotRunDir(__DIR__), new NullLogger()
+        ->setPathToPolyglotRunDir(__DIR__)
 ));
 
 header('Content-Type:application\/json');

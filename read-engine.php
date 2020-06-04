@@ -9,7 +9,7 @@ use WebSocket\Client;
 $reader = new EngineLogReader(
         'engine.log',
         $wsClient = new Client(
-    isset($argv[1]) ? $argv[1] : 'ws://websockets:8000',
+    isset($argv[1]) ? $argv[1] : 'ws://3.20.233.150:8000',
         [
             'timeout' => 60 * 60 * 24
         ]

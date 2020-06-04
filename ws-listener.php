@@ -9,7 +9,7 @@ use StasPiv\ChessBestMove\Service\ChessBestMove;
 use WebSocket\Client;
 use WebSocket\ConnectionException;
 
-$wsUrl = isset($argv[1]) ? $argv[1] : 'ws://websockets:8000';
+$wsUrl = isset($argv[1]) ? $argv[1] : 'ws://3.20.233.150:8000';
 $wsClient = new Client(
     $wsUrl,
     [
@@ -21,11 +21,11 @@ $bestMove = new ChessBestMove(
     (new EngineConfiguration('stockfish'))
         ->addOption('Skill Level', 20)
         ->addOption('Hash', 1024)
-        ->addOption('Threads', 8)
+        ->addOption('Threads', 4)
         ->addOption('Clear Hash', 1)
         ->addOption('Contempt', 0)
         ->addOption('multipv', 2)
-        ->setPathToPolyglotRunDir(__DIR__), new NullLogger()
+        ->setPathToPolyglotRunDir(__DIR__)
 );
 
 error_reporting(E_ERROR);

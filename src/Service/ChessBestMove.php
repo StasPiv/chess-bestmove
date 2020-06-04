@@ -29,25 +29,16 @@ class ChessBestMove
      */
     private $engineConfiguration;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
     private $currentScore = -9999;
-
-    private $readingProcess;
 
     /**
      * ChessBestMove constructor.
      *
      * @param EngineConfiguration $engineConfiguration
-     * @param LoggerInterface     $logger
      */
-    public function __construct(EngineConfiguration $engineConfiguration, LoggerInterface $logger = null)
+    public function __construct(EngineConfiguration $engineConfiguration)
     {
         $this->engineConfiguration = $engineConfiguration;
-        $this->logger = $logger;
     }
 
     /**
