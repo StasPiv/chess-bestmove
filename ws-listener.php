@@ -21,7 +21,7 @@ $bestMove = new ChessBestMove(
     (new EngineConfiguration('stockfish'))
         ->addOption('Skill Level', 20)
         ->addOption('Hash', 1024)
-        ->addOption('Threads', 4)
+        ->addOption('Threads', 8)
         ->addOption('Clear Hash', 1)
         ->addOption('Contempt', 0)
         ->addOption('multipv', 2)

@@ -13,10 +13,8 @@ RUN apt-get install polyglot -y
 RUN apt-get install stockfish -y
 WORKDIR /root/chess-bestmove
 RUN composer install
-COPY run.sh /root/chess-bestmove/run.sh
 COPY ws-listener.php /root/chess-bestmove/ws-listener.php
 COPY read-engine.php /root/chess-bestmove/read-engine.php
-RUN chmod +x /root/chess-bestmove/run.sh
 RUN chmod +x /root/chess-bestmove/ws-listener.php
 RUN chmod +x /root/chess-bestmove/read-engine.php
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
