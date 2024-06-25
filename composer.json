@@ -18,7 +18,7 @@
         "symfony/web-server-bundle": "^4.4",
         "ext-json": "*",
         "guzzlehttp/guzzle": "^6.5",
-        "opis/closure": "3.5.1",
+        "opis/closure": "^4.0",
         "ext-posix": "*"
     },
     "require-dev": {
