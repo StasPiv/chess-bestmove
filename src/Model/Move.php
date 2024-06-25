@@ -17,28 +17,28 @@ class Move
      *
      * @JMS\Type("string")
      */
-    private string $from;
+    private string $from = '';
 
     /**
      * @var string
      *
      * @JMS\Type("string")
      */
-    private string $to;
+    private string $to = '';
 
     /**
      * @var string
      *
      * @JMS\Type("string")
      */
-    private string $promotion;
+    private string $promotion = '';
 
     /**
      * @var integer
      *
      * @JMS\Type("integer")
      */
-    private int $score;
+    private int $score = 0;
 
     /**
      * @return string
