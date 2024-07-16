@@ -13,7 +13,6 @@
         "jms/serializer": "3.*",
         "psr/log": "3.x-dev",
         "textalk/websocket": "1.2.0",
-        "symfony/web-server-bundle": "^4.4",
         "ext-json": "*",
         "guzzlehttp/guzzle": "^6.5",
         "opis/closure": "dev-master",
