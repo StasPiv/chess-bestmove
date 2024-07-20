@@ -29,7 +29,7 @@ class ChessBestMove
      */
     private $engineConfiguration;
 
-    private $currentScore = -9999;
+    private $currentScore = -99999;
 
     /**
      * ChessBestMove constructor.
