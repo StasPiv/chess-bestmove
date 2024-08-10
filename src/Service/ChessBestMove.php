@@ -14,6 +14,7 @@ use StasPiv\ChessBestMove\Exception\BotIsFailedException;
 use StasPiv\ChessBestMove\Exception\GameOverException;
 use StasPiv\ChessBestMove\Exception\NotValidBestMoveHaystackException;
 use StasPiv\ChessBestMove\Exception\ResourceUnavailableException;
+use StasPiv\ChessBestMove\Model\Diff;
 use StasPiv\ChessBestMove\Model\EngineConfiguration;
 use StasPiv\ChessBestMove\Model\Move;
 
@@ -30,6 +31,8 @@ class ChessBestMove
     private $engineConfiguration;
 
     private $currentScore = -99999;
+
+    private $moveScores = [];
 
     /**
      * ChessBestMove constructor.
@@ -57,9 +60,30 @@ class ChessBestMove
 
         $this->sendGo($moveTime);
         $bestMove = $this->searchBestMove($this->pipes[1]);
-        $bestMove->setScore($this->currentScore);
+        $bestMove->setScore($this->moveScores[1]['score']);
 
         return $bestMove;
+    }
+
+    public function getDiff(string $fen, string $move, int $moveTime = 3000): Diff
+    {
+        if (!is_resource($this->resource)) {
+            $this->startGame();
+        }
+
+        $this->sendCommand('position fen ' . $fen);
+
+        $this->sendGo($moveTime);
+        $this->searchBestMove($this->pipes[1]);
+        $gameScore = $bestScore = $this->moveScores[1]['score'];
+
+        foreach ($this->moveScores as $moveScore) {
+            if ($moveScore['move'] == $move) {
+                $gameScore = $moveScore['score'];
+            }
+        }
+
+        return new Diff($fen, $move, $this->moveScores[1]['move'], $bestScore, $gameScore);
     }
 
     /**
@@ -229,11 +253,20 @@ class ChessBestMove
 
     private function searchScore(string $content)
     {
-        if (preg_match('/score (.+) nodes/', $content, $matches)) {
-            if (preg_match('/mate (\-?\d+)/', $matches[1], $matchesEstimation)) {
-                $this->currentScore = $matchesEstimation[1] > 0 ? 99999 : -99999;
-            } elseif (preg_match('/cp (\-?\d+)/', $matches[1], $matchesEstimation)) {
-                $this->currentScore = $matchesEstimation[1];
+        if (preg_match('/multipv (\d+) score (.+) nodes/', $content, $matches)) {
+            $multipv = $matches[1];
+
+            if (preg_match('/mate (\-?\d+)/', $matches[2], $matchesEstimation)) {
+                $currentScore = $matchesEstimation[1] > 0 ? 99999 : -99999;
+            } elseif (preg_match('/cp (\-?\d+)/', $matches[2], $matchesEstimation)) {
+                $currentScore = $matchesEstimation[1];
+            } else {
+                return;
+            }
+
+            if (preg_match('/ pv (\w+)/', $content, $matches)) {
+                $currentMove = $matches[1];
+                $this->moveScores[$multipv] = ['move' => $currentMove, 'score' => $currentScore];
             }
         }
     }

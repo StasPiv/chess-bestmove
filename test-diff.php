@@ -14,10 +14,10 @@ $testEngineConfiguration
 $testEngineConfiguration->setPathToPolyglotRunDir(__DIR__);
 $chessBestMoveService = new ChessBestMove($testEngineConfiguration);
 
-$bestMove = $chessBestMoveService->getBestMoveFromFen(
-    '4r1k1/5ppp/p3r3/1p1p4/3P4/2P1BPq1/PP1Q4/R3RK2 w - - 0 26',
+$diff = $chessBestMoveService->getDiff(
+    'r1bq1rk1/5ppp/p1pb4/1p1n4/3P4/1BP5/PP3PPP/RNBQR1K1 b - - 2 13',
+    'd8c7',
     100,
 );
 
-echo $bestMove . PHP_EOL;
-echo $bestMove->getScore(). PHP_EOL;
+var_dump($diff);
