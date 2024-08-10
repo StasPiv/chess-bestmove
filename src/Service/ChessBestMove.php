@@ -67,6 +67,7 @@ class ChessBestMove
 
     public function getDiff(string $fen, string $move, int $moveTime = 3000): Diff
     {
+        $this->moveScores = [];
         if (!is_resource($this->resource)) {
             $this->startGame();
         }
