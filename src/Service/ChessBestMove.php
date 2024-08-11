@@ -74,7 +74,8 @@ class ChessBestMove
 
         $this->sendCommand('position fen ' . $fen);
 
-        $this->sendGo($moveTime);
+        $bestMove = $this->getBestMoveFromFen($fen, $moveTime);
+        $this->sendGo($moveTime,  $bestMove . ' ' . $move);
         $this->searchBestMove($this->pipes[1]);
         $gameScore = $bestScore = $this->moveScores[1]['score'];
 
@@ -84,7 +85,17 @@ class ChessBestMove
             }
         }
 
+        $this->closeEngine();
         return new Diff($fen, $move, $this->moveScores[1]['move'], $bestScore, $gameScore);
+    }
+
+    private function closeEngine(): void
+    {
+        foreach ($this->pipes as $pipe) {
+            fclose($pipe);
+        }
+
+        proc_close($this->resource);
     }
 
     /**
@@ -185,8 +196,9 @@ class ChessBestMove
 
     /**
      * @param int $moveTime
+     * @param string|null $moves
      */
-    private function sendGo(int $moveTime)
+    private function sendGo(int $moveTime, ?string $moves = null)
     {
         if ($moveTime === 0) {
             $this->sendCommand('go infinite');
@@ -194,7 +206,13 @@ class ChessBestMove
             return;
         }
 
-        $this->sendCommand('go movetime ' . $moveTime);
+        $command = 'go movetime ' . $moveTime;
+
+        if ($moves) {
+            $command .= ' searchmoves ' . $moves;
+        }
+
+        $this->sendCommand($command);
     }
 
     /**
