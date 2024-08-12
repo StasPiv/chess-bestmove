@@ -75,6 +75,7 @@ class ChessBestMove
         $this->sendCommand('position fen ' . $fen);
 
         $bestMove = $this->getBestMoveFromFen($fen, $moveTime);
+        $this->moveScores = [];
         $this->sendGo($moveTime,  $bestMove . ' ' . $move);
         $this->searchBestMove($this->pipes[1]);
 
