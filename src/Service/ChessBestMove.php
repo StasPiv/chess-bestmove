@@ -77,7 +77,13 @@ class ChessBestMove
         $bestMove = $this->getBestMoveFromFen($fen, $moveTime);
         $this->sendGo($moveTime,  $bestMove . ' ' . $move);
         $this->searchBestMove($this->pipes[1]);
-        $gameScore = $bestScore = $this->moveScores[1]['score'];
+
+        usort(
+            $this->moveScores,
+            fn(array $moveScoreA, array $moveScoreB): int => $moveScoreB['score'] <=> $moveScoreA['score'],
+        );
+
+        $gameScore = $bestScore = $this->moveScores[0]['score'];
 
         foreach ($this->moveScores as $moveScore) {
             if ($moveScore['move'] == $move) {
@@ -86,7 +92,7 @@ class ChessBestMove
         }
 
         $this->closeEngine();
-        return new Diff($fen, $move, $this->moveScores[1]['move'], $bestScore, $gameScore);
+        return new Diff($fen, $move, $this->moveScores[0]['move'], $bestScore, $gameScore);
     }
 
     private function closeEngine(): void
