@@ -8,7 +8,6 @@ require_once 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 
 $testEngineConfiguration = new EngineConfiguration('stockfish');
 $testEngineConfiguration
-    ->addOption('Hash', '256')
     ->addOption('MultiPV', '2')
     ->addOption('Threads', '1');
 $testEngineConfiguration->setPathToPolyglotRunDir(__DIR__);
