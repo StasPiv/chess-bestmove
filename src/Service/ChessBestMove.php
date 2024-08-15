@@ -90,7 +90,6 @@ class ChessBestMove
             }
         }
 
-        $this->closeEngine();
         return new Diff($fen, $move, $bestMove, $bestScore, $gameScore);
     }
 
