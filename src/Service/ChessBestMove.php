@@ -191,6 +191,7 @@ class ChessBestMove
             }
 
             if (empty($content)) {
+                $this->closeEngine();
                 throw new BotIsFailedException;
             }
         } while (strpos($content, $needle) === false);
